@@ -79,7 +79,7 @@ export default function AddQuestion() {
     }
 
     try {
-      const response = await axios.post('http://localhost:8080/question/add', question, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/question/add`, question, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

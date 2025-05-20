@@ -12,9 +12,7 @@ import QuizTest from './components/QuizTest';
 import Result from './components/Result'
 
 function App() {
-  // const [count, setCount] = useState(0);
-  // const location = useLocation();
-  // const showNavbar = !location.pathname.startsWith('/quiz/');
+
 
   return (
     <>

@@ -69,7 +69,7 @@ function GetQuiz() {
         setError(null);
         
         const token = getToken();
-        const response = await axios.get('http://localhost:8080/quiz/get', {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/quiz/get`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         setQuizzes(response.data || []);
@@ -87,7 +87,7 @@ function GetQuiz() {
       setQuestionsLoading(true);
       setQuestions([]);
       const token = getToken();
-      const response = await axios.get(`http://localhost:8080/quiz/getQuestions/${quizId}`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/quiz/getQuestions/${quizId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 

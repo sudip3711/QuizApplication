@@ -444,6 +444,7 @@
 
 // 3333
 
+// ... keep your imports the same
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FiEye, FiPlus } from 'react-icons/fi';
@@ -462,9 +463,39 @@ function GetQuiz() {
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
     if (!user?.token) {
-      navigate("/"); // Redirect if not logged in
+      navigate("/");
     }
   }, [navigate]);
+
+  const ShareButton = ({ quizId }) => {
+    const [copied, setCopied] = useState(false);
+
+    const copyLink = async () => {
+      try {
+        await navigator.clipboard.writeText(`${window.location.origin}/quiz/${quizId}`);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        const textArea = document.createElement('textarea');
+        textArea.value = `${import.meta.env.VITE_API_URL}/quiz/${quizId}`;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    };
+
+    return (
+      <button
+        onClick={copyLink}
+        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+      >
+        {copied ? 'Copied!' : 'Share'}
+      </button>
+    );
+  };
 
   const getToken = () => {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -501,13 +532,18 @@ function GetQuiz() {
 
       const formattedQuestions = response.data.map(question => ({
         questionText: question.questionTitle,
-        options: [question.option1, question.option2, question.option3, question.option4].filter(Boolean)
+        options: [
+          question.option1,
+          question.option2,
+          question.option3,
+          question.option4
+        ].filter(option => option !== null)
       }));
 
       setQuestions(formattedQuestions);
       setSelectedQuiz(quizzes.find(q => q.id === quizId) || null);
       setShowQuestionsModal(true);
-    } catch {
+    } catch (err) {
       setError('Failed to load questions. Please try again.');
     } finally {
       setQuestionsLoading(false);
@@ -518,43 +554,12 @@ function GetQuiz() {
     window.open(`/quiz/${quizId}`, '_blank', 'noopener,noreferrer');
   };
 
-  // Share button component
-  const ShareButton = ({ quizId }) => {
-    const [copied, setCopied] = useState(false);
-
-    const copyLink = async () => {
-      try {
-        await navigator.clipboard.writeText(`${window.location.origin}/quiz/${quizId}`);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch {
-        const textArea = document.createElement('textarea');
-        textArea.value = `${import.meta.env.VITE_API_URL}/quiz/${quizId}`;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }
-    };
-
-    return (
-      <button
-        onClick={copyLink}
-        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-      >
-        {copied ? 'Copied!' : 'Share'}
-      </button>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Your Quizzes</h1>
-          <button 
+          <button
             onClick={() => navigate('/createquiz')}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
           >
@@ -562,45 +567,71 @@ function GetQuiz() {
           </button>
         </div>
 
-        {error && <p className="text-red-600 mb-4">{error}</p>}
-        {loading ? (
-          <p>Loading quizzes...</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {quizzes.map(quiz => (
-              <div key={quiz.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow relative">
-                <button
-                  onClick={() => fetchQuestions(quiz.id)}
-                  className="absolute top-2 left-2 p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition"
-                  title="View Questions"
-                >
-                  <FiEye className="text-gray-700" />
-                </button>
+        {loading && <p>Loading quizzes...</p>}
+        {error && <p className="text-red-500">{error}</p>}
 
-                <div className="p-6 pt-12">
-                  <h2 className="text-xl font-semibold mb-2">{quiz.title}</h2>
-                  <p className="text-gray-600 mb-4 line-clamp-2">
-                    {quiz.description || 'No description available'}
-                  </p>
-                  <div className="flex justify-between items-center mt-4">
-                    <span className="text-sm text-gray-500">
-                      {new Date(quiz.createdDate).toLocaleDateString()}
-                    </span>
-                    <div className="flex space-x-2">
-                      <button 
-                        onClick={() => startQuiz(quiz.id)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                      >
-                        Start
-                      </button>
-                      <ShareButton quizId={quiz.id} />
-                    </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {quizzes.map((quiz) => (
+            <div key={quiz.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow relative">
+              <button
+                onClick={() => fetchQuestions(quiz.id)}
+                className="absolute top-2 left-2 p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition"
+                title="View Questions"
+              >
+                <FiEye className="text-gray-700" />
+              </button>
+
+              <div className="p-6 pt-12">
+                <h2 className="text-xl font-semibold mb-2">{quiz.title}</h2>
+                <p className="text-gray-600 mb-2 line-clamp-2">
+                  {quiz.description || 'No description available'}
+                </p>
+
+                <p className="text-sm text-gray-600">
+                  <strong>Start:</strong>{' '}
+                  {new Date(quiz.startTime).toLocaleString('en-IN', {
+                    timeZone: 'Asia/Kolkata',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    second: 'numeric',
+                    hour12: true
+                  })}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <strong>End:</strong>{' '}
+                  {new Date(quiz.endTime).toLocaleString('en-IN', {
+                    timeZone: 'Asia/Kolkata',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    second: 'numeric',
+                    hour12: true
+                  })}
+                </p>
+
+                <div className="flex justify-between items-center mt-4">
+                  <span className="text-sm text-gray-500">
+                    Created: {new Date(quiz.createdDate).toLocaleDateString()}
+                  </span>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => startQuiz(quiz.id)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                    >
+                      Start
+                    </button>
+                    <ShareButton quizId={quiz.id} />
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {showQuestionsModal && (
@@ -626,15 +657,15 @@ function GetQuiz() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {questions.map((q, i) => (
-                    <div key={i} className="border-b pb-4 last:border-b-0">
+                  {questions.map((question, index) => (
+                    <div key={index} className="border-b pb-4 last:border-b-0">
                       <h3 className="font-medium text-lg mb-3">
-                        <span className="text-blue-600">{i + 1}.</span> {q.questionText}
+                        <span className="text-blue-600">{index + 1}.</span> {question.questionText}
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {q.options.map((opt, idx) => (
-                          <div key={idx} className="p-3 rounded bg-gray-50 hover:bg-gray-100 transition">
-                            {opt}
+                        {question.options.map((option, i) => (
+                          <div key={i} className="p-3 rounded bg-gray-50 hover:bg-gray-100 transition">
+                            {option}
                           </div>
                         ))}
                       </div>

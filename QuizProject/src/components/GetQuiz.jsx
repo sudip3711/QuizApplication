@@ -112,6 +112,11 @@ function GetQuiz() {
   };
 
   const startQuiz = (quizId) => {
+     const user = JSON.parse(localStorage.getItem('user'));
+  if (!user?.token) {
+    alert('After login you can access the quiz.');
+    return; // stop from opening the quiz if not logged in
+  }
     window.open(`/quiz/${quizId}`, '_blank', 'noopener,noreferrer');
   };
 
